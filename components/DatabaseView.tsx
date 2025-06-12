@@ -28,6 +28,7 @@ import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 
 interface DatabaseViewProps {
+  apiKey: string;
   databaseId: string;
   onPageSelect: (pageId: string) => void;
   onBack: () => void;
@@ -148,36 +149,36 @@ function ColumnItem({ column, onToggle }: { column: ColumnConfig; onToggle: () =
     <div
       ref={setNodeRef}
       style={style}
-      className="flex items-center gap-3 p-3 rounded-lg hover:bg-[var(--muted)] transition-colors"
+      className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-800 transition-colors"
     >
       <button
         {...attributes}
         {...listeners}
-        className="cursor-grab hover:text-[var(--primary)]"
+        className="cursor-grab hover:text-blue-400 text-gray-400 flex-shrink-0"
       >
         <GripVertical className="w-4 h-4" />
       </button>
       
-      <label className="flex items-center gap-3 flex-1 cursor-pointer">
+      <label className="flex items-center gap-3 flex-1 cursor-pointer min-w-0">
         <input
           type="checkbox"
           checked={column.visible}
           onChange={onToggle}
-          className="checkbox-modern"
+          className="w-4 h-4 text-blue-600 bg-gray-700 border-gray-600 rounded focus:ring-blue-500 focus:ring-2 flex-shrink-0"
         />
-        <span className="text-sm font-medium">{column.name}</span>
+        <span className="text-sm font-medium text-white truncate">{column.name}</span>
       </label>
       
       {column.visible ? (
-        <Eye className="w-4 h-4 text-[var(--muted-foreground)]" />
+        <Eye className="w-4 h-4 text-gray-400 flex-shrink-0" />
       ) : (
-        <EyeOff className="w-4 h-4 text-[var(--muted-foreground)]" />
+        <EyeOff className="w-4 h-4 text-gray-400 flex-shrink-0" />
       )}
     </div>
   );
 }
 
-export default function DatabaseView({ databaseId, onPageSelect, onBack, onLogout }: DatabaseViewProps) {
+export default function DatabaseView({ apiKey, databaseId, onPageSelect, onBack, onLogout }: DatabaseViewProps) {
   const [items, setItems] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -199,8 +200,10 @@ export default function DatabaseView({ databaseId, onPageSelect, onBack, onLogou
   );
 
   useEffect(() => {
+    // Initialize the notion service with the API key
+    notionService.initialize(apiKey);
     loadDatabaseItems();
-  }, [databaseId]);
+  }, [databaseId, apiKey]);
 
   const loadDatabaseItems = async () => {
     try {
@@ -555,31 +558,31 @@ export default function DatabaseView({ databaseId, onPageSelect, onBack, onLogou
             <div className="flex items-center gap-2">
               <button
                 onClick={() => setShowSort(!showSort)}
-                className="button-secondary px-4 py-2 inline-flex items-center gap-2"
+                className="button-secondary"
               >
                 <SortAsc className="h-4 w-4" />
-                Sort
+                <span className="hidden sm:inline">Sort</span>
               </button>
               <button
                 onClick={() => setShowFilters(!showFilters)}
-                className="button-secondary px-4 py-2 inline-flex items-center gap-2"
+                className="button-secondary"
               >
                 <Filter className="h-4 w-4" />
-                Filter
+                <span className="hidden sm:inline">Filter</span>
               </button>
               <button
                 onClick={() => setShowSettings(!showSettings)}
-                className="button-secondary px-4 py-2 inline-flex items-center gap-2"
+                className="button-secondary"
               >
                 <Settings2 className="h-4 w-4" />
-                Customize
+                <span className="hidden sm:inline">Customize</span>
               </button>
               <button
                 onClick={onLogout}
-                className="button-secondary px-4 py-2 inline-flex items-center gap-2"
+                className="button-secondary"
               >
                 <LogOut className="h-4 w-4" />
-                Logout
+                <span className="hidden sm:inline">Logout</span>
               </button>
             </div>
           </div>
@@ -587,16 +590,17 @@ export default function DatabaseView({ databaseId, onPageSelect, onBack, onLogou
       </header>
 
       {/* Main Content */}
-      <main className="p-6">
+      <main className="p-3 sm:p-6">
         {items.length === 0 ? (
-          <div className="card p-12 text-center">
-            <p className="text-[var(--muted-foreground)]">
+          <div className="card p-6 sm:p-12 text-center">
+            <p className="text-sm sm:text-base text-[var(--muted-foreground)]">
               No items found in this database.
             </p>
           </div>
         ) : (
           <div className="card overflow-hidden shadow-sm">
-            <div className="overflow-x-auto">
+            <div className="overflow-x-auto overflow-y-visible">
+              <div className="min-w-max">
               <DndContext
                 sensors={sensors}
                 collisionDetection={closestCenter}
@@ -665,7 +669,7 @@ export default function DatabaseView({ databaseId, onPageSelect, onBack, onLogou
                               >
                                 <div className="table-cell-wrap">
                                   {property ? (
-                                    <PropertyRenderer property={property} />
+                                    <PropertyRenderer property={property} propertyName={column.name} />
                                   ) : (
                                     <span className="text-gray-300 dark:text-gray-700 select-none">—</span>
                                   )}
@@ -679,29 +683,35 @@ export default function DatabaseView({ databaseId, onPageSelect, onBack, onLogou
                   </tbody>
                 </table>
               </DndContext>
+              </div>
             </div>
           </div>
         )}
       </main>
 
       {/* Settings Panel */}
-      <div className={`settings-panel ${showSettings ? 'open' : ''}`}>
-        <div className="settings-panel-header">
-          <div className="flex items-center justify-between">
-            <h3 className="text-lg font-semibold">Customize Columns</h3>
-            <button
-              onClick={() => setShowSettings(false)}
-              className="p-2 hover:bg-[var(--muted)] rounded-lg transition-colors"
-            >
-              <X className="h-4 w-4" />
-            </button>
-          </div>
-          <p className="text-sm text-[var(--muted-foreground)] mt-2">
-            Toggle visibility and drag to reorder
-          </p>
-        </div>
-        
-        <div className="settings-panel-content">
+      {showSettings && (
+        <div className="fixed inset-0 z-50 overflow-hidden">
+          <div className="absolute inset-0 bg-black/20" onClick={() => setShowSettings(false)} />
+          
+          <div className={`absolute right-0 top-0 h-full w-full sm:max-w-md bg-gray-900 text-white shadow-xl transform transition-transform duration-300 ${showSettings ? 'translate-x-0' : 'translate-x-full'}`}>
+            <div className="flex flex-col h-full">
+              <div className="p-6 border-b border-gray-700">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-lg font-semibold text-white">Customize Columns</h3>
+                  <button
+                    onClick={() => setShowSettings(false)}
+                    className="p-2 hover:bg-gray-700 rounded-lg transition-colors"
+                  >
+                    <X className="h-4 w-4 text-white" />
+                  </button>
+                </div>
+                <p className="text-sm text-gray-400 mt-2">
+                  Toggle visibility and drag to reorder
+                </p>
+              </div>
+              
+              <div className="flex-1 p-6 overflow-y-auto">
           <DndContext
             sensors={sensors}
             collisionDetection={closestCenter}
@@ -724,15 +734,10 @@ export default function DatabaseView({ databaseId, onPageSelect, onBack, onLogou
               </div>
             </SortableContext>
           </DndContext>
+              </div>
+            </div>
+          </div>
         </div>
-      </div>
-
-      {/* Overlay */}
-      {showSettings && (
-        <div
-          className="fixed inset-0 bg-black/20 z-40"
-          onClick={() => setShowSettings(false)}
-        />
       )}
 
       {/* Filter Panel */}

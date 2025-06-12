@@ -1,7 +1,8 @@
 'use client';
 
-import { useCallback } from 'react';
-import { Plus, X, GripVertical } from 'lucide-react';
+import * as React from 'react';
+import { useCallback, useRef, useEffect } from 'react';
+import { Plus, X, GripVertical, ArrowUpDown } from 'lucide-react';
 import {
   DndContext,
   closestCenter,
@@ -24,20 +25,29 @@ import { CSS } from '@dnd-kit/utilities';
 import type { SortConfig } from '@/types/sort';
 
 interface SortPanelProps {
-  properties: Record<string, any>;
-  sortConfig: SortConfig[];
-  onSortChange: (sortConfig: SortConfig[]) => void;
+  isOpen: boolean;
+  onClose: () => void;
+  columns: { name: string; type: string }[];
+  items: any[];
+  currentSort: SortConfig;
+  onSort: (sort: SortConfig) => void;
+}
+
+interface SortLevel {
+  property: string;
+  direction: 'ascending' | 'descending';
+  type?: string;
 }
 
 interface SortItemProps {
-  sort: SortConfig;
+  sort: SortLevel;
   index: number;
-  properties: Record<string, any>;
-  onUpdate: (index: number, updates: Partial<SortConfig>) => void;
+  columns: { name: string; type: string }[];
+  onUpdate: (index: number, updates: Partial<SortLevel>) => void;
   onRemove: (index: number) => void;
 }
 
-function SortItem({ sort, index, properties, onUpdate, onRemove }: SortItemProps) {
+function SortItem({ sort, index, columns, onUpdate, onRemove }: SortItemProps) {
   const {
     attributes,
     listeners,
@@ -45,7 +55,7 @@ function SortItem({ sort, index, properties, onUpdate, onRemove }: SortItemProps
     transform,
     transition,
     isDragging,
-  } = useSortable({ id: sort.id });
+  } = useSortable({ id: `sort-${index}` });
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -57,125 +67,203 @@ function SortItem({ sort, index, properties, onUpdate, onRemove }: SortItemProps
     <div
       ref={setNodeRef}
       style={style}
-      className="flex items-center gap-2 p-2 bg-background rounded border"
+      className="bg-gray-800 rounded-lg p-3 sm:p-4"
     >
-      <button
-        className="cursor-move touch-none"
-        {...attributes}
-        {...listeners}
-      >
-        <GripVertical className="h-4 w-4 text-muted-foreground" />
-      </button>
-
-      <select
-        value={sort.property}
-        onChange={(e) => onUpdate(index, { property: e.target.value })}
-        className="px-3 py-1 border rounded-md bg-background text-sm flex-1"
-      >
-        {Object.entries(properties).map(([key, prop]) => (
-          <option key={key} value={key}>
-            {prop.name}
-          </option>
-        ))}
-      </select>
-
-      <select
-        value={sort.direction}
-        onChange={(e) => onUpdate(index, { direction: e.target.value as 'ascending' | 'descending' })}
-        className="px-3 py-1 border rounded-md bg-background text-sm"
-      >
-        <option value="ascending">Ascending</option>
-        <option value="descending">Descending</option>
-      </select>
-
-      <button
-        onClick={() => onRemove(index)}
-        className="p-1 hover:bg-accent rounded"
-      >
-        <X className="h-4 w-4" />
-      </button>
+      <div className="flex flex-col gap-2 sm:gap-3">
+        <div className="flex items-center gap-2">
+          <button
+            {...attributes}
+            {...listeners}
+            className="cursor-grab hover:text-blue-400 transition-colors text-gray-400 flex-shrink-0"
+          >
+            <GripVertical className="w-4 h-4" />
+          </button>
+          <select
+            value={sort.property}
+            onChange={(e) => onUpdate(index, { property: e.target.value })}
+            className="flex-1 px-2 sm:px-3 py-1.5 bg-gray-700 text-white border border-gray-600 rounded-md text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent"
+          >
+            {columns.map((col) => (
+              <option key={col.name} value={col.name}>
+                {col.name}
+              </option>
+            ))}
+          </select>
+          <button
+            onClick={() => onRemove(index)}
+            className="p-1.5 hover:bg-red-800 text-red-400 rounded transition-colors flex-shrink-0"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+        <div className="flex items-center gap-2 pl-4 sm:pl-6">
+          <select
+            value={sort.direction}
+            onChange={(e) => onUpdate(index, { direction: e.target.value as 'ascending' | 'descending' })}
+            className="flex-1 px-2 sm:px-3 py-1.5 bg-gray-700 text-white border border-gray-600 rounded-md text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent"
+          >
+            <option value="ascending">Ascending (A → Z, 1 → 9)</option>
+            <option value="descending">Descending (Z → A, 9 → 1)</option>
+          </select>
+        </div>
+      </div>
     </div>
   );
 }
 
-export default function SortPanel({ properties, sortConfig, onSortChange }: SortPanelProps) {
+export default function SortPanel({ isOpen, onClose, columns, items, currentSort, onSort }: SortPanelProps) {
+  const panelRef = useRef<HTMLDivElement>(null);
+  const [sortLevels, setSortLevels] = React.useState<SortLevel[]>(() => {
+    if (currentSort?.levels && Array.isArray(currentSort.levels)) {
+      return currentSort.levels;
+    }
+    return [];
+  });
+
   const sensors = useSensors(
-    useSensor(PointerSensor),
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8,
+      },
+    }),
     useSensor(KeyboardSensor, {
       coordinateGetter: sortableKeyboardCoordinates,
     })
   );
 
-  const addSort = () => {
-    const firstProperty = Object.keys(properties)[0];
-    const newSort: SortConfig = {
-      id: `sort-${Date.now()}`,
-      property: firstProperty,
-      direction: 'ascending',
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (panelRef.current && !panelRef.current.contains(event.target as Node)) {
+        onClose();
+      }
     };
-    onSortChange([...sortConfig, newSort]);
-  };
 
-  const updateSort = useCallback((index: number, updates: Partial<SortConfig>) => {
-    const newSortConfig = [...sortConfig];
-    newSortConfig[index] = { ...newSortConfig[index], ...updates };
-    onSortChange(newSortConfig);
-  }, [sortConfig, onSortChange]);
+    if (isOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
 
-  const removeSort = useCallback((index: number) => {
-    onSortChange(sortConfig.filter((_, i) => i !== index));
-  }, [sortConfig, onSortChange]);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isOpen, onClose]);
+
+  useEffect(() => {
+    if (currentSort?.levels && Array.isArray(currentSort.levels)) {
+      setSortLevels(currentSort.levels);
+    }
+  }, [currentSort]);
+
+  if (!isOpen) return null;
 
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
 
     if (over && active.id !== over.id) {
-      const oldIndex = sortConfig.findIndex((item) => item.id === active.id);
-      const newIndex = sortConfig.findIndex((item) => item.id === over.id);
-      onSortChange(arrayMove(sortConfig, oldIndex, newIndex));
+      const oldIndex = parseInt(active.id.toString().replace('sort-', ''));
+      const newIndex = parseInt(over.id.toString().replace('sort-', ''));
+      
+      setSortLevels((levels) => arrayMove(levels, oldIndex, newIndex));
     }
   };
 
-  return (
-    <div className="bg-card border rounded-lg p-4">
-      <div className="flex items-center justify-between mb-4">
-        <h3 className="font-medium">Sort</h3>
-        <button
-          onClick={addSort}
-          className="inline-flex items-center gap-1 text-sm text-primary hover:underline"
-        >
-          <Plus className="h-4 w-4" />
-          Add sort
-        </button>
-      </div>
+  const addSort = () => {
+    const newSort: SortLevel = {
+      property: columns[0]?.name || '',
+      direction: 'ascending',
+    };
+    setSortLevels([...sortLevels, newSort]);
+  };
 
-      {sortConfig.length === 0 ? (
-        <p className="text-sm text-muted-foreground">No sorting applied</p>
-      ) : (
-        <DndContext
-          sensors={sensors}
-          collisionDetection={closestCenter}
-          onDragEnd={handleDragEnd}
-        >
-          <SortableContext
-            items={sortConfig.map(s => s.id)}
-            strategy={verticalListSortingStrategy}
+  const updateSort = (index: number, updates: Partial<SortLevel>) => {
+    const updated = [...sortLevels];
+    updated[index] = { ...updated[index], ...updates };
+    setSortLevels(updated);
+  };
+
+  const removeSort = (index: number) => {
+    setSortLevels(sortLevels.filter((_, i) => i !== index));
+  };
+
+  const applySort = () => {
+    onSort({
+      levels: sortLevels,
+      enabled: true,
+    });
+    onClose();
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 overflow-hidden">
+      <div className="absolute inset-0 bg-black/20" onClick={onClose} />
+      
+      <div 
+        ref={panelRef}
+        className="absolute right-0 top-0 h-full w-full sm:max-w-md bg-gray-900 text-white shadow-xl transform transition-transform duration-300"
+      >
+        <div className="flex items-center justify-between p-4 sm:p-6 border-b border-gray-700">
+          <div className="flex items-center gap-2">
+            <ArrowUpDown className="w-5 h-5 text-blue-400" />
+            <h2 className="text-lg font-semibold text-white">Sort</h2>
+          </div>
+          <button
+            onClick={onClose}
+            className="p-2 hover:bg-gray-700 rounded-lg transition-colors"
           >
-            <div className="space-y-2">
-              {sortConfig.map((sort, index) => (
-                <SortItem
-                  key={sort.id}
-                  sort={sort}
-                  index={index}
-                  properties={properties}
-                  onUpdate={updateSort}
-                  onRemove={removeSort}
-                />
-              ))}
-            </div>
-          </SortableContext>
-        </DndContext>
-      )}
+            <X className="w-5 h-5 text-white" />
+          </button>
+        </div>
+
+        <div className="p-4 sm:p-6 space-y-3 sm:space-y-4 overflow-y-auto" style={{ maxHeight: 'calc(100vh - 100px)' }}>
+          {sortLevels.length === 0 ? (
+            <p className="text-gray-400 text-center py-8">
+              No sorting applied. Click "Add Sort" to get started.
+            </p>
+          ) : (
+            <DndContext
+              sensors={sensors}
+              collisionDetection={closestCenter}
+              onDragEnd={handleDragEnd}
+            >
+              <SortableContext
+                items={sortLevels.map((_, index) => `sort-${index}`)}
+                strategy={verticalListSortingStrategy}
+              >
+                <div className="space-y-3">
+                  {sortLevels.map((sort, index) => (
+                    <SortItem
+                      key={`sort-${index}`}
+                      sort={sort}
+                      index={index}
+                      columns={columns}
+                      onUpdate={updateSort}
+                      onRemove={removeSort}
+                    />
+                  ))}
+                </div>
+              </SortableContext>
+            </DndContext>
+          )}
+
+          <div className="space-y-3 pt-4">
+            <button
+              onClick={addSort}
+              className="w-full py-2 px-4 bg-gray-700 text-white rounded-lg hover:bg-gray-600 transition-colors flex items-center justify-center gap-2 font-medium"
+            >
+              <Plus className="w-4 h-4" />
+              Add Sort Level
+            </button>
+            
+            {sortLevels.length > 0 && (
+              <button
+                onClick={applySort}
+                className="w-full py-2 px-4 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
+              >
+                Apply Sort
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

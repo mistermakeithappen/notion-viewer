@@ -66,3 +66,65 @@ export function isDateProperty(propertyType: string): boolean {
 export function isBooleanProperty(propertyType: string): boolean {
   return propertyType === 'checkbox';
 }
+
+export function sortItems(items: any[], sortConfig: any): any[] {
+  if (!sortConfig || !sortConfig.column) return items;
+  
+  return [...items].sort((a, b) => {
+    const aValue = getPropertyValue(a.properties[sortConfig.column]);
+    const bValue = getPropertyValue(b.properties[sortConfig.column]);
+    
+    // Handle null/undefined values
+    if (aValue === '' && bValue === '') return 0;
+    if (aValue === '') return sortConfig.direction === 'asc' ? 1 : -1;
+    if (bValue === '') return sortConfig.direction === 'asc' ? -1 : 1;
+    
+    let comparison = 0;
+    
+    // Compare based on type
+    if (typeof aValue === 'number' && typeof bValue === 'number') {
+      comparison = aValue - bValue;
+    } else if (typeof aValue === 'boolean' && typeof bValue === 'boolean') {
+      comparison = Number(aValue) - Number(bValue);
+    } else if (aValue instanceof Date && bValue instanceof Date) {
+      comparison = aValue.getTime() - bValue.getTime();
+    } else {
+      // String comparison (case-insensitive)
+      const aStr = String(aValue).toLowerCase();
+      const bStr = String(bValue).toLowerCase();
+      comparison = aStr.localeCompare(bStr);
+    }
+    
+    return sortConfig.direction === 'asc' ? comparison : -comparison;
+  });
+}
+
+export function detectPropertyType(items: any[], propertyName: string): string {
+  if (!items || items.length === 0) return 'text';
+  
+  for (const item of items) {
+    const property = item.properties?.[propertyName];
+    if (property?.type) {
+      return property.type;
+    }
+  }
+  
+  return 'text';
+}
+
+export function getSuggestedSortOptions(propertyType: string): string[] {
+  switch (propertyType) {
+    case 'number':
+    case 'formula':
+    case 'rollup':
+      return ['Lowest to Highest', 'Highest to Lowest'];
+    case 'date':
+    case 'created_time':
+    case 'last_edited_time':
+      return ['Oldest to Newest', 'Newest to Oldest'];
+    case 'checkbox':
+      return ['Unchecked → Checked', 'Checked → Unchecked'];
+    default:
+      return ['A → Z', 'Z → A'];
+  }
+}

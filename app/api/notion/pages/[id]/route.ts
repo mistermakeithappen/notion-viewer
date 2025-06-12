@@ -3,7 +3,7 @@ import { Client } from '@notionhq/client';
 
 export async function GET(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const authHeader = request.headers.get('authorization');
   
@@ -15,7 +15,8 @@ export async function GET(
   const notion = new Client({ auth: token });
 
   try {
-    const page = await notion.pages.retrieve({ page_id: params.id });
+    const { id } = await params;
+    const page = await notion.pages.retrieve({ page_id: id });
     return NextResponse.json(page);
   } catch (error) {
     console.error('Notion API error:', error);

@@ -91,12 +91,12 @@ export default function DatabaseSelector({ apiKey, onSelectDatabase, onBack }: D
         Change API Key
       </button>
 
-      <h2 className="text-2xl font-semibold mb-6">Select a Database</h2>
+      <h2 className="text-xl sm:text-2xl font-semibold mb-4 sm:mb-6">Select a Database</h2>
 
       {databases.length === 0 ? (
         <p className="text-muted-foreground">No databases found. Make sure your integration has access to at least one database.</p>
       ) : (
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
           {databases.map((db) => (
             <button
               key={db.id}
