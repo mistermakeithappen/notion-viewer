@@ -325,7 +325,7 @@ export default function PropertyRenderer({ property, propertyName, item }: Prope
       const buttonName = propertyName || property.button?.name || 'Button';
       
       // Handle the old button name and map it to the new one
-      const normalizedButtonName = buttonName === 'installation/pickup/delivery complete' 
+      const normalizedButtonName = buttonName.toLowerCase() === 'installation/pickup/delivery complete' 
         ? 'Fulfillment Complete' 
         : buttonName;
       
