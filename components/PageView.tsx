@@ -156,11 +156,11 @@ export default function PageView({ apiKey, pageId, onBack }: PageViewProps) {
                       {startBuildProps.map(([key, property]: [string, any]) => (
                         <div key={key}>
                           {property.type === 'button' ? (
-                            <PropertyRenderer property={property} propertyName={key} />
+                            <PropertyRenderer property={property} propertyName={key} item={page} />
                           ) : (
                             <div className="space-y-1">
                               <div className="text-sm font-medium text-muted-foreground">{key}</div>
-                              <PropertyRenderer property={property} propertyName={key} />
+                              <PropertyRenderer property={property} propertyName={key} item={page} />
                             </div>
                           )}
                         </div>
@@ -177,11 +177,11 @@ export default function PageView({ apiKey, pageId, onBack }: PageViewProps) {
                       {orderBuiltProps.map(([key, property]: [string, any]) => (
                         <div key={key}>
                           {property.type === 'button' ? (
-                            <PropertyRenderer property={property} propertyName={key} />
+                            <PropertyRenderer property={property} propertyName={key} item={page} />
                           ) : (
                             <div className="space-y-1">
                               <div className="text-sm font-medium text-muted-foreground">{key}</div>
-                              <PropertyRenderer property={property} propertyName={key} />
+                              <PropertyRenderer property={property} propertyName={key} item={page} />
                             </div>
                           )}
                         </div>
@@ -198,11 +198,11 @@ export default function PageView({ apiKey, pageId, onBack }: PageViewProps) {
                       {completionProps.map(([key, property]: [string, any]) => (
                         <div key={key}>
                           {property.type === 'button' ? (
-                            <PropertyRenderer property={property} propertyName={key} />
+                            <PropertyRenderer property={property} propertyName={key} item={page} />
                           ) : (
                             <div className="space-y-1">
                               <div className="text-sm font-medium text-muted-foreground">{key}</div>
-                              <PropertyRenderer property={property} propertyName={key} />
+                              <PropertyRenderer property={property} propertyName={key} item={page} />
                             </div>
                           )}
                         </div>
@@ -219,11 +219,11 @@ export default function PageView({ apiKey, pageId, onBack }: PageViewProps) {
                       {bhsBidProps.map(([key, property]: [string, any]) => (
                         <div key={key} className="flex-1">
                           {property.type === 'button' ? (
-                            <PropertyRenderer property={property} propertyName={key} />
+                            <PropertyRenderer property={property} propertyName={key} item={page} />
                           ) : (
                             <div className="space-y-1">
                               <div className="text-sm font-medium text-yellow-800 dark:text-yellow-200">{key}</div>
-                              <PropertyRenderer property={property} propertyName={key} />
+                              <PropertyRenderer property={property} propertyName={key} item={page} />
                             </div>
                           )}
                         </div>
@@ -243,7 +243,7 @@ export default function PageView({ apiKey, pageId, onBack }: PageViewProps) {
                             {property.type === 'title' ? 'Title' : key}
                           </div>
                           <div>
-                            <PropertyRenderer property={property} propertyName={key} />
+                            <PropertyRenderer property={property} propertyName={key} item={page} />
                           </div>
                         </div>
                       ))}
