@@ -22,7 +22,7 @@ import {
   useSortable,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import type { SortConfig } from '@/types/sort';
+import type { SortConfig, SortLevel } from '@/types/sort';
 
 interface SortPanelProps {
   isOpen: boolean;
@@ -31,12 +31,6 @@ interface SortPanelProps {
   items: any[];
   currentSort: SortConfig;
   onSort: (sort: SortConfig) => void;
-}
-
-interface SortLevel {
-  property: string;
-  direction: 'ascending' | 'descending';
-  type?: string;
 }
 
 interface SortItemProps {
