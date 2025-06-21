@@ -3,8 +3,9 @@ import { Client } from '@notionhq/client';
 
 export async function GET(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   const authHeader = request.headers.get('authorization');
   
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
@@ -20,7 +21,7 @@ export async function GET(
     
     do {
       const response = await notion.blocks.children.list({
-        block_id: params.id,
+        block_id: id,
         start_cursor: cursor,
       });
       

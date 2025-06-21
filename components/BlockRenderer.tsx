@@ -56,21 +56,21 @@ export default function BlockRenderer({ block }: BlockRendererProps) {
 
     case 'heading_1':
       return (
-        <h1 className="text-3xl font-bold mb-4 mt-8">
+        <h1 className="text-2xl sm:text-3xl font-bold mb-3 sm:mb-4 mt-6 sm:mt-8">
           {renderRichText(block.heading_1.rich_text)}
         </h1>
       );
 
     case 'heading_2':
       return (
-        <h2 className="text-2xl font-semibold mb-3 mt-6">
+        <h2 className="text-xl sm:text-2xl font-semibold mb-2 sm:mb-3 mt-4 sm:mt-6">
           {renderRichText(block.heading_2.rich_text)}
         </h2>
       );
 
     case 'heading_3':
       return (
-        <h3 className="text-xl font-medium mb-2 mt-4">
+        <h3 className="text-lg sm:text-xl font-medium mb-2 mt-3 sm:mt-4">
           {renderRichText(block.heading_3.rich_text)}
         </h3>
       );
@@ -134,9 +134,9 @@ export default function BlockRenderer({ block }: BlockRendererProps) {
 
     case 'callout':
       return (
-        <div className="flex gap-3 p-4 bg-accent rounded-lg mb-4">
-          <span className="text-2xl">{block.callout.icon?.emoji || '💡'}</span>
-          <div>{renderRichText(block.callout.rich_text)}</div>
+        <div className="flex gap-2 sm:gap-3 p-3 sm:p-4 bg-accent rounded-lg mb-4">
+          <span className="text-xl sm:text-2xl">{block.callout.icon?.emoji || '💡'}</span>
+          <div className="text-sm sm:text-base">{renderRichText(block.callout.rich_text)}</div>
         </div>
       );
 
@@ -227,7 +227,7 @@ export default function BlockRenderer({ block }: BlockRendererProps) {
 
     case 'column_list':
       return (
-        <div className="grid grid-cols-2 gap-4 mb-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
           {/* Column children would be rendered here */}
         </div>
       );

@@ -5,20 +5,21 @@ import { CheckSquare, Square, User, Calendar, Paperclip, Link as LinkIcon, Tag }
 
 interface PropertyRendererProps {
   property: any;
+  item?: any; // The full item data including icon
 }
 
-// Color mapping for Notion colors to Tailwind classes
+// Color mapping for Notion colors - more vibrant and contrasty
 const colorMap: Record<string, { bg: string; text: string; border: string }> = {
-  gray: { bg: 'bg-gray-100 dark:bg-gray-800', text: 'text-gray-700 dark:text-gray-300', border: 'border-gray-300 dark:border-gray-600' },
-  brown: { bg: 'bg-amber-100 dark:bg-amber-900/30', text: 'text-amber-700 dark:text-amber-300', border: 'border-amber-300 dark:border-amber-700' },
-  orange: { bg: 'bg-orange-100 dark:bg-orange-900/30', text: 'text-orange-700 dark:text-orange-300', border: 'border-orange-300 dark:border-orange-700' },
-  yellow: { bg: 'bg-yellow-100 dark:bg-yellow-900/30', text: 'text-yellow-700 dark:text-yellow-300', border: 'border-yellow-300 dark:border-yellow-700' },
-  green: { bg: 'bg-green-100 dark:bg-green-900/30', text: 'text-green-700 dark:text-green-300', border: 'border-green-300 dark:border-green-700' },
-  blue: { bg: 'bg-blue-100 dark:bg-blue-900/30', text: 'text-blue-700 dark:text-blue-300', border: 'border-blue-300 dark:border-blue-700' },
-  purple: { bg: 'bg-purple-100 dark:bg-purple-900/30', text: 'text-purple-700 dark:text-purple-300', border: 'border-purple-300 dark:border-purple-700' },
-  pink: { bg: 'bg-pink-100 dark:bg-pink-900/30', text: 'text-pink-700 dark:text-pink-300', border: 'border-pink-300 dark:border-pink-700' },
-  red: { bg: 'bg-red-100 dark:bg-red-900/30', text: 'text-red-700 dark:text-red-300', border: 'border-red-300 dark:border-red-700' },
-  default: { bg: 'bg-gray-100 dark:bg-gray-800', text: 'text-gray-700 dark:text-gray-300', border: 'border-gray-300 dark:border-gray-600' }
+  gray: { bg: 'bg-gray-200 dark:bg-gray-700', text: 'text-gray-800 dark:text-gray-100', border: 'border-gray-400 dark:border-gray-500' },
+  brown: { bg: 'bg-amber-200 dark:bg-amber-900/50', text: 'text-amber-900 dark:text-amber-100', border: 'border-amber-400 dark:border-amber-600' },
+  orange: { bg: 'bg-orange-200 dark:bg-orange-900/50', text: 'text-orange-900 dark:text-orange-100', border: 'border-orange-400 dark:border-orange-600' },
+  yellow: { bg: 'bg-yellow-200 dark:bg-yellow-900/50', text: 'text-yellow-900 dark:text-yellow-100', border: 'border-yellow-400 dark:border-yellow-600' },
+  green: { bg: 'bg-green-200 dark:bg-green-900/50', text: 'text-green-900 dark:text-green-100', border: 'border-green-400 dark:border-green-600' },
+  blue: { bg: 'bg-blue-200 dark:bg-blue-900/50', text: 'text-blue-900 dark:text-blue-100', border: 'border-blue-400 dark:border-blue-600' },
+  purple: { bg: 'bg-purple-200 dark:bg-purple-900/50', text: 'text-purple-900 dark:text-purple-100', border: 'border-purple-400 dark:border-purple-600' },
+  pink: { bg: 'bg-pink-200 dark:bg-pink-900/50', text: 'text-pink-900 dark:text-pink-100', border: 'border-pink-400 dark:border-pink-600' },
+  red: { bg: 'bg-red-200 dark:bg-red-900/50', text: 'text-red-900 dark:text-red-100', border: 'border-red-400 dark:border-red-600' },
+  default: { bg: 'bg-gray-200 dark:bg-gray-700', text: 'text-gray-800 dark:text-gray-100', border: 'border-gray-400 dark:border-gray-500' }
 };
 
 function getColorClasses(color?: string) {
@@ -28,22 +29,37 @@ function getColorClasses(color?: string) {
 function Badge({ children, color = 'gray', className = '' }: { children: React.ReactNode; color?: string; className?: string }) {
   const colors = getColorClasses(color);
   return (
-    <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium ${colors.bg} ${colors.text} ${colors.border} border ${className}`}>
+    <span className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold ${colors.bg} ${colors.text} ${colors.border} border-2 ${className}`}>
       {children}
     </span>
   );
 }
 
-export default function PropertyRenderer({ property }: PropertyRendererProps) {
+export default function PropertyRenderer({ property, propertyName, item }: PropertyRendererProps & { propertyName?: string }) {
   if (!property) return <span className="text-gray-400 dark:text-gray-600">—</span>;
 
   switch (property.type) {
     case 'title':
       const titleText = property.title?.[0]?.plain_text || '';
-      return titleText ? (
-        <span className="font-medium text-[var(--foreground)]">{titleText}</span>
-      ) : (
-        <span className="text-gray-400 dark:text-gray-600">Untitled</span>
+      const icon = item?.icon;
+      
+      return (
+        <div className="flex items-center gap-2">
+          {icon && (
+            icon.type === 'emoji' ? (
+              <span className="text-lg">{icon.emoji}</span>
+            ) : icon.type === 'external' ? (
+              <img src={icon.external.url} alt="" className="w-5 h-5 object-cover rounded" />
+            ) : icon.type === 'file' ? (
+              <img src={icon.file.url} alt="" className="w-5 h-5 object-cover rounded" />
+            ) : null
+          )}
+          {titleText ? (
+            <span className="font-medium text-[var(--foreground)]">{titleText}</span>
+          ) : (
+            <span className="text-gray-400 dark:text-gray-600">Untitled</span>
+          )}
+        </div>
       );
 
     case 'rich_text':
@@ -294,7 +310,40 @@ export default function PropertyRenderer({ property }: PropertyRendererProps) {
         <span className="text-gray-400 dark:text-gray-600">—</span>
       );
 
+    case 'button':
+      return (
+        <button
+          className="px-3 py-1 text-xs font-bold rounded-md bg-red-500 text-white border-2 border-red-600 hover:bg-red-600 hover:border-red-700 transition-all transform hover:scale-105 cursor-pointer shadow-sm hover:shadow-md active:scale-95 active:shadow-inner active:bg-red-700 active:border-red-800"
+          onClick={(e) => {
+            e.stopPropagation();
+            // Button properties in Notion are just visual, they don't have actions in the API
+            
+            // Add visual feedback
+            const button = e.currentTarget;
+            button.style.transform = 'scale(0.9)';
+            
+            // Create ripple effect
+            const ripple = document.createElement('span');
+            ripple.className = 'absolute inset-0 rounded-md';
+            ripple.style.background = 'radial-gradient(circle, rgba(255,255,255,0.5) 0%, transparent 70%)';
+            ripple.style.animation = 'ripple-animation 0.6s ease-out';
+            button.style.position = 'relative';
+            button.style.overflow = 'hidden';
+            button.appendChild(ripple);
+            
+            setTimeout(() => {
+              button.style.transform = '';
+              ripple.remove();
+            }, 600);
+          }}
+        >
+          {propertyName || property.button?.name || 'Click Here'}
+        </button>
+      );
+
+
     default:
+      console.log('Unknown property type:', property.type, property);
       return <span className="text-gray-400 dark:text-gray-600">—</span>;
   }
 }

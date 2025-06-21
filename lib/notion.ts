@@ -122,3 +122,71 @@ export function getPropertyValue(property: any): any {
       return '';
   }
 }
+
+// Notion service class
+export class NotionService {
+  private apiKey: string | null = null;
+
+  initialize(apiKey: string) {
+    this.apiKey = apiKey;
+  }
+
+  private getHeaders() {
+    if (!this.apiKey) throw new Error('Notion API key not initialized');
+    return {
+      'Authorization': `Bearer ${this.apiKey}`,
+      'Content-Type': 'application/json',
+    };
+  }
+
+  async getDatabases() {
+    const response = await fetch('/api/notion/databases', {
+      headers: this.getHeaders(),
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.details || error.error || 'Failed to fetch databases');
+    }
+
+    return response.json();
+  }
+
+  async queryDatabase(databaseId: string) {
+    const response = await fetch(`/api/notion/databases/${databaseId}/query`, {
+      headers: this.getHeaders(),
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to query database');
+    }
+
+    return response.json();
+  }
+
+  async getPage(pageId: string) {
+    const response = await fetch(`/api/notion/pages/${pageId}`, {
+      headers: this.getHeaders(),
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to fetch page');
+    }
+
+    return response.json();
+  }
+
+  async getBlocks(blockId: string) {
+    const response = await fetch(`/api/notion/blocks/${blockId}`, {
+      headers: this.getHeaders(),
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to fetch blocks');
+    }
+
+    return response.json();
+  }
+}
+
+export const notionService = new NotionService();
