@@ -213,7 +213,7 @@ export default function DatabaseView({ apiKey, databaseId, onPageSelect, onBack,
       
       // Initialize column configs
       if (results.length > 0) {
-        const allColumns = Array.from(new Set(results.flatMap((item: any) => Object.keys(item.properties))));
+        const allColumns: string[] = Array.from(new Set(results.flatMap((item: any) => Object.keys(item.properties))));
         
         // Check for saved preferences
         const savedPrefs = localStorage.getItem(PREFS_KEY);
