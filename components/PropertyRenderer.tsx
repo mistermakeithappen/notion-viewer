@@ -314,18 +314,33 @@ export default function PropertyRenderer({ property, propertyName, item }: Prope
       // Log button property data for debugging
       console.log('Button property data:', property);
       
+      // Define webhook URLs for each specific button
+      const webhookUrls: Record<string, string> = {
+        'starting to build': 'https://hook.us2.make.com/gnlcuujnjf3oitya7m821vb6bmsxxh9a',
+        'order is built': 'https://hook.us2.make.com/ateli5u3xhf0t4sjtpkjjmllvkmrd8pa',
+        'Fulfillment Complete': 'https://hook.us2.make.com/yu80mpi4lwbdiu4233we3we8sodzwt6a',
+        'request BHS bid': '', // Add webhook URL here
+      };
+      
+      const buttonName = propertyName || property.button?.name || 'Button';
+      
+      // Handle the old button name and map it to the new one
+      const normalizedButtonName = buttonName === 'installation/pickup/delivery complete' 
+        ? 'Fulfillment Complete' 
+        : buttonName;
+      
+      const webhookUrl = webhookUrls[normalizedButtonName] || '';
+      
       return (
         <button
           className="px-3 py-1 text-xs font-bold rounded-md bg-red-500 text-white border-2 border-red-600 hover:bg-red-600 hover:border-red-700 transition-all transform hover:scale-105 cursor-pointer shadow-sm hover:shadow-md active:scale-95 active:shadow-inner active:bg-red-700 active:border-red-800 relative overflow-hidden"
-          title="Note: Button actions from Notion cannot be triggered via the API. This button is view-only."
-          onClick={(e) => {
+          title={webhookUrl ? "Click to trigger webhook" : "Configure webhook URL to enable this button"}
+          onClick={async (e) => {
             e.stopPropagation();
             
             // Log click event and property data
-            console.log('Button clicked:', propertyName, property);
-            
-            // Show alert to user about API limitation
-            alert(`Button "${propertyName || 'Button'}" clicked!\n\nNote: Notion's API doesn't support triggering button actions. Buttons in Notion databases are designed to work within Notion itself (automations, formulas, etc.) and these actions aren't accessible via the API.\n\nThis is a view-only representation of the button.`);
+            console.log('Button clicked:', buttonName, property);
+            console.log('Full item data:', item);
             
             // Add visual feedback
             const button = e.currentTarget;
@@ -338,13 +353,93 @@ export default function PropertyRenderer({ property, propertyName, item }: Prope
             ripple.style.animation = 'ripple-animation 0.6s ease-out';
             button.appendChild(ripple);
             
+            // Special handling for "request BHS bid" button
+            if (normalizedButtonName === 'request BHS bid') {
+              // Open Jobber form in new tab
+              window.open('https://clienthub.getjobber.com/client_hubs/f486317e-8be2-4170-8143-b8873af80140/public/work_request/new?source=technician', '_blank');
+              
+              // Visual feedback
+              button.classList.add('bg-blue-500', 'border-blue-600');
+              button.classList.remove('bg-red-500', 'border-red-600');
+              
+              const originalText = button.textContent;
+              button.textContent = '✓ Opening...';
+              
+              setTimeout(() => {
+                button.classList.remove('bg-blue-500', 'border-blue-600');
+                button.classList.add('bg-red-500', 'border-red-600');
+                button.textContent = originalText;
+              }, 1500);
+            } else if (webhookUrl) {
+              try {
+                // Prepare the data payload
+                const payload = {
+                  buttonName: buttonName,
+                  timestamp: new Date().toISOString(),
+                  notionPageId: item?.id,
+                  notionPageUrl: item?.url,
+                  // Include all properties
+                  properties: item?.properties || {},
+                  // Include raw item data for maximum flexibility
+                  rawData: item
+                };
+                
+                // Send webhook
+                const response = await fetch(webhookUrl, {
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/json',
+                  },
+                  body: JSON.stringify(payload)
+                });
+                
+                if (response.ok) {
+                  // Success feedback
+                  button.classList.add('bg-green-500', 'border-green-600');
+                  button.classList.remove('bg-red-500', 'border-red-600');
+                  
+                  // Show success message
+                  const originalText = button.textContent;
+                  button.textContent = '✓ Sent!';
+                  
+                  setTimeout(() => {
+                    button.classList.remove('bg-green-500', 'border-green-600');
+                    button.classList.add('bg-red-500', 'border-red-600');
+                    button.textContent = originalText;
+                  }, 2000);
+                } else {
+                  throw new Error(`Webhook failed: ${response.status}`);
+                }
+              } catch (error) {
+                console.error('Webhook error:', error);
+                
+                // Error feedback
+                button.classList.add('bg-gray-500', 'border-gray-600');
+                button.classList.remove('bg-red-500', 'border-red-600');
+                
+                // Show error message
+                const originalText = button.textContent;
+                button.textContent = '✗ Failed';
+                
+                setTimeout(() => {
+                  button.classList.remove('bg-gray-500', 'border-gray-600');
+                  button.classList.add('bg-red-500', 'border-red-600');
+                  button.textContent = originalText;
+                }, 2000);
+                
+                alert(`Failed to send webhook: ${error instanceof Error ? error.message : 'Unknown error'}`);
+              }
+            } else {
+              alert(`Button "${normalizedButtonName}" clicked!\n\nNo webhook URL configured for this button.\n\nTo enable this button, add its webhook URL in the webhookUrls configuration.`);
+            }
+            
             setTimeout(() => {
               button.style.transform = '';
               ripple.remove();
             }, 600);
           }}
         >
-          {propertyName || property.button?.name || 'Click Here'}
+          {normalizedButtonName || 'Click Here'}
         </button>
       );
 

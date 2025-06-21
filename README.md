@@ -58,6 +58,53 @@ npm run dev
 3. Use the Filter and Sort buttons to customize your view
 4. Click on any row to view the full page content
 
+### Button Webhook Integration
+
+Notion buttons can now trigger webhooks to services like Make.com! When a button is clicked, it sends all the row data to a configured webhook URL.
+
+#### Setup:
+
+1. **Option 1: Default Webhook (All Buttons)**
+   - Create a `.env.local` file in the root directory
+   - Add: `NEXT_PUBLIC_DEFAULT_WEBHOOK_URL=https://hook.us1.make.com/your-webhook-id`
+   - All buttons will use this webhook URL
+
+2. **Option 2: Button-Specific Webhooks**
+   - Edit `components/PropertyRenderer.tsx`
+   - Find the `webhookUrls` object
+   - Add entries for each button name:
+   ```javascript
+   const webhookUrls: Record<string, string> = {
+     'Send Email': 'https://hook.us1.make.com/email-webhook-id',
+     'Create Task': 'https://hook.us1.make.com/task-webhook-id',
+     default: process.env.NEXT_PUBLIC_DEFAULT_WEBHOOK_URL || ''
+   };
+   ```
+
+#### Webhook Payload:
+
+When a button is clicked, this JSON payload is sent to the webhook:
+
+```json
+{
+  "buttonName": "Button Name",
+  "timestamp": "2024-01-01T12:00:00.000Z",
+  "notionPageId": "page-id-from-notion",
+  "notionPageUrl": "https://notion.so/...",
+  "properties": {
+    // All Notion properties for this row
+  },
+  "rawData": {
+    // Complete raw data from Notion API
+  }
+}
+```
+
+#### Visual Feedback:
+- **Green**: Webhook sent successfully
+- **Gray**: Webhook failed
+- **Red**: Default button state
+
 ## Tech Stack
 
 - **Next.js 15** - React framework with App Router
