@@ -7,7 +7,7 @@ import PropertyRenderer from './PropertyRenderer';
 import FilterPanel from './FilterPanel';
 import SortPanel from './SortPanel';
 import { sortItems, detectPropertyType, getSuggestedSortOptions } from '@/lib/sortUtils';
-import { SortConfig as EnhancedSortConfig, SortLevel } from '@/types/sort';
+import { EnhancedSortConfig, SortLevel } from '@/types/sort';
 import {
   DndContext,
   closestCenter,

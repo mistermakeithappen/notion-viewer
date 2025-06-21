@@ -2,8 +2,11 @@ export interface SortConfig {
   id: string;
   property: string;
   direction: 'ascending' | 'descending';
-  levels?: SortLevel[];
-  presets?: any[];
+}
+
+export interface EnhancedSortConfig {
+  levels: SortLevel[];
+  presets: any[];
 }
 
 export interface SortLevel {
