@@ -329,7 +329,7 @@ export default function PropertyRenderer({ property, propertyName, item }: Prope
         ? 'Fulfillment Complete' 
         : buttonName;
       
-      const webhookUrl = webhookUrls[normalizedButtonName] || '';
+      const webhookUrl = webhookUrls[normalizedButtonName] || webhookUrls[normalizedButtonName.toLowerCase()] || '';
       
       return (
         <button
@@ -354,7 +354,8 @@ export default function PropertyRenderer({ property, propertyName, item }: Prope
             button.appendChild(ripple);
             
             // Special handling for "request BHS bid" button
-            if (normalizedButtonName === 'request BHS bid') {
+            console.log('Checking button name:', normalizedButtonName, 'against "request BHS bid"');
+            if (normalizedButtonName.toLowerCase() === 'request bhs bid') {
               // Open Jobber form in new tab
               window.open('https://clienthub.getjobber.com/client_hubs/f486317e-8be2-4170-8143-b8873af80140/public/work_request/new?source=technician', '_blank');
               
@@ -370,6 +371,7 @@ export default function PropertyRenderer({ property, propertyName, item }: Prope
                 button.classList.add('bg-red-500', 'border-red-600');
                 button.textContent = originalText;
               }, 1500);
+              return; // Exit early for special handling
             } else if (webhookUrl) {
               try {
                 // Prepare the data payload
