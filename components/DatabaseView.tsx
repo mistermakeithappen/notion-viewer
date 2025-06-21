@@ -6,7 +6,7 @@ import { ArrowLeft, Loader2, Settings2, Eye, EyeOff, GripVertical, X, LogOut, Fi
 import PropertyRenderer from './PropertyRenderer';
 import FilterPanel from './FilterPanel';
 import SortPanel from './SortPanel';
-import { sortItems, detectPropertyType, getSuggestedSortOptions } from '@/lib/sortUtils';
+import { sortItems, detectPropertyType } from '@/lib/sortUtils';
 import { EnhancedSortConfig, SortLevel } from '@/types/sort';
 import {
   DndContext,
@@ -339,8 +339,7 @@ export default function DatabaseView({ apiKey, databaseId, onPageSelect, onBack,
           column,
           direction: newDirection,
           enabled: true,
-          nullHandling: 'last',
-          ...(propertyType && getSuggestedSortOptions(propertyType, items, column))
+          nullHandling: 'last'
         };
         setEnhancedSortConfig({
           ...enhancedSortConfig,
@@ -357,8 +356,7 @@ export default function DatabaseView({ apiKey, databaseId, onPageSelect, onBack,
         column,
         direction: 'asc',
         enabled: true,
-        nullHandling: 'last',
-        ...(propertyType && getSuggestedSortOptions(propertyType, items, column))
+        nullHandling: 'last'
       };
       setEnhancedSortConfig({
         ...enhancedSortConfig,
@@ -374,8 +372,10 @@ export default function DatabaseView({ apiKey, databaseId, onPageSelect, onBack,
     const firstEnabledLevel = newSortConfig.levels.find(l => l.enabled);
     if (firstEnabledLevel) {
       setSortConfig({
-        column: firstEnabledLevel.column,
-        direction: firstEnabledLevel.direction
+        column: firstEnabledLevel.column || firstEnabledLevel.property || null,
+        direction: firstEnabledLevel.direction === 'ascending' || firstEnabledLevel.direction === 'descending' 
+          ? (firstEnabledLevel.direction === 'ascending' ? 'asc' : 'desc')
+          : firstEnabledLevel.direction as 'asc' | 'desc'
       });
     } else {
       setSortConfig({ column: null, direction: 'asc' });

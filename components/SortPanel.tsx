@@ -22,15 +22,15 @@ import {
   useSortable,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import type { SortConfig, SortLevel } from '@/types/sort';
+import type { EnhancedSortConfig, SortLevel } from '@/types/sort';
 
 interface SortPanelProps {
   isOpen: boolean;
   onClose: () => void;
   columns: { name: string; type: string }[];
   items: any[];
-  currentSort: SortConfig;
-  onSort: (sort: SortConfig) => void;
+  currentSort: EnhancedSortConfig;
+  onSort: (sort: EnhancedSortConfig) => void;
 }
 
 interface SortItemProps {
@@ -181,7 +181,7 @@ export default function SortPanel({ isOpen, onClose, columns, items, currentSort
   const applySort = () => {
     onSort({
       levels: sortLevels,
-      enabled: true,
+      presets: []
     });
     onClose();
   };
