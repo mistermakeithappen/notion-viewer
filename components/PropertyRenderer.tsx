@@ -311,12 +311,21 @@ export default function PropertyRenderer({ property, propertyName, item }: Prope
       );
 
     case 'button':
+      // Log button property data for debugging
+      console.log('Button property data:', property);
+      
       return (
         <button
-          className="px-3 py-1 text-xs font-bold rounded-md bg-red-500 text-white border-2 border-red-600 hover:bg-red-600 hover:border-red-700 transition-all transform hover:scale-105 cursor-pointer shadow-sm hover:shadow-md active:scale-95 active:shadow-inner active:bg-red-700 active:border-red-800"
+          className="px-3 py-1 text-xs font-bold rounded-md bg-red-500 text-white border-2 border-red-600 hover:bg-red-600 hover:border-red-700 transition-all transform hover:scale-105 cursor-pointer shadow-sm hover:shadow-md active:scale-95 active:shadow-inner active:bg-red-700 active:border-red-800 relative overflow-hidden"
+          title="Note: Button actions from Notion cannot be triggered via the API. This button is view-only."
           onClick={(e) => {
             e.stopPropagation();
-            // Button properties in Notion are just visual, they don't have actions in the API
+            
+            // Log click event and property data
+            console.log('Button clicked:', propertyName, property);
+            
+            // Show alert to user about API limitation
+            alert(`Button "${propertyName || 'Button'}" clicked!\n\nNote: Notion's API doesn't support triggering button actions. Buttons in Notion databases are designed to work within Notion itself (automations, formulas, etc.) and these actions aren't accessible via the API.\n\nThis is a view-only representation of the button.`);
             
             // Add visual feedback
             const button = e.currentTarget;
@@ -327,8 +336,6 @@ export default function PropertyRenderer({ property, propertyName, item }: Prope
             ripple.className = 'absolute inset-0 rounded-md';
             ripple.style.background = 'radial-gradient(circle, rgba(255,255,255,0.5) 0%, transparent 70%)';
             ripple.style.animation = 'ripple-animation 0.6s ease-out';
-            button.style.position = 'relative';
-            button.style.overflow = 'hidden';
             button.appendChild(ripple);
             
             setTimeout(() => {
