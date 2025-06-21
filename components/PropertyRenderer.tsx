@@ -314,22 +314,23 @@ export default function PropertyRenderer({ property, propertyName, item }: Prope
       // Log button property data for debugging
       console.log('Button property data:', property);
       
-      // Define webhook URLs for each specific button
+      // Define webhook URLs for each specific button (using lowercase keys for case-insensitive matching)
       const webhookUrls: Record<string, string> = {
         'starting to build': 'https://hook.us2.make.com/gnlcuujnjf3oitya7m821vb6bmsxxh9a',
         'order is built': 'https://hook.us2.make.com/ateli5u3xhf0t4sjtpkjjmllvkmrd8pa',
-        'Fulfillment Complete': 'https://hook.us2.make.com/yu80mpi4lwbdiu4233we3we8sodzwt6a',
-        'request BHS bid': '', // Add webhook URL here
+        'fulfillment complete': 'https://hook.us2.make.com/yu80mpi4lwbdiu4233we3we8sodzwt6a',
+        'request bhs bid': '', // Add webhook URL here
       };
       
       const buttonName = propertyName || property.button?.name || 'Button';
       
       // Handle the old button name and map it to the new one
       const normalizedButtonName = buttonName.toLowerCase() === 'installation/pickup/delivery complete' 
-        ? 'Fulfillment Complete' 
+        ? 'fulfillment complete' 
         : buttonName;
       
-      const webhookUrl = webhookUrls[normalizedButtonName] || webhookUrls[normalizedButtonName.toLowerCase()] || '';
+      // Always look up webhooks using lowercase to ensure case-insensitive matching
+      const webhookUrl = webhookUrls[normalizedButtonName.toLowerCase()] || '';
       
       return (
         <button
